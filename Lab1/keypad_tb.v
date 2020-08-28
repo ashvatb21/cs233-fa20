@@ -46,6 +46,6 @@ module keypad_test;
 
    initial
      // $display(inputs);
-     $monitor("At time %t, abcdefg = %b valid = %d number = %x",
+     $monitor("At time %t, abcdefg = %x valid = %d number = %x",
               $time, inputs, valid, number);
 endmodule // keypad_test
