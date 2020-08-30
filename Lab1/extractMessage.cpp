@@ -20,6 +20,31 @@ unsigned char *extractMessage(const unsigned char *message_in, int length) {
     }
 
     // TODO: write your code here
+    for (int i = 0; i < length; i+=8) {
+
+        for (int j = 0; j < 8; j++) {
+            int ascii = 0;
+            int counter = 1;
+            int temp = 1;
+
+            counter = counter << j;
+            // cout << counter << endl;
+
+            for (int k = 0; k < 8; k++) {
+                int bit = (message_in[k + i] & counter);
+                // cout << temp << endl;
+
+                if (bit) {
+                    ascii = ascii + temp;
+                    //cout << ascii << endl;
+                }
+
+                temp = temp * 2;
+            }
+
+            message_out[i + j] = ascii;
+        }
+    }
 
     return message_out;
 }

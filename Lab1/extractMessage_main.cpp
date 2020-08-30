@@ -16,7 +16,11 @@
 
 using namespace std;
 const char DEFAULT_MESSAGE[] = { 93, 223, 134, 215, 0, 254, 223, 0, 199, 191, 9, 29, 32, 207, 231, 0, 77, 28, 185, 88, 128, 251, 253, 0, 163, 190, 174, 223, 32, 207, 231, 0, 163, 67, 169, 16, 74, 255, 250, 0, 1, 1, 1, 1, 1, 1, 0, 0};
+// const char DEFAULT_MESSAGE[] = {210, 208, 222, 157, 64, 190, 223, 0};
+// const char DEFAULT_MESSAGE[] = {210, 208, 222, 157, 64, 190, 223, 0, 8, 1, 6, 2, 1, 15, 7, 0};
 const int DEFAULT_MESSAGE_LENGTH = 48;
+// const int DEFAULT_MESSAGE_LENGTH = 8;
+// const int DEFAULT_MESSAGE_LENGTH = 16;
 
 /*
  * Returns the length of a string if it were padded to the nearest multiple of 8. 
