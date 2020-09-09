@@ -13,6 +13,7 @@ module register(q, d, clk, enable, reset);
     input  clk, enable, reset;
     
     //  Your implementation goes here
+    dffe d1(q[0], d[0], clk, enable, reset);
     dffe d1(q[1], d[1], clk, enable, reset);
     dffe d2(q[2], d[2], clk, enable, reset);
     dffe d3(q[3], d[3], clk, enable, reset);
