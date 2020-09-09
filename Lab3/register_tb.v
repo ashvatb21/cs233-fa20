@@ -23,6 +23,8 @@ module test;
           d = 89;
 
         // Add your own testcases here!
+        // try resetting the register
+          reset = 0;
 
         # 700 $finish;
     end
