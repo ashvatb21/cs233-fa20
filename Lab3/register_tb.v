@@ -22,11 +22,12 @@ module test;
           enable = 0;
           d = 89;
 
+        # 15
         // Add your own testcases here!
         // try resetting the register
-          reset = 0;
+          reset = 1;
 
-        # 700 $finish;
+        # 100 $finish;
     end
     
     initial begin
