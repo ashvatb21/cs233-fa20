@@ -26,7 +26,7 @@ module alu32_test;
         # 10 A = 32'h7fffffff; B = 32'h80000000; control = `ALU_SUB; // Subtracting large negative number from large positive number
 
         // Inputs for Quiz
-        # 10 A = 32'h7a0286df; B = 32'h21a80155; control = 3'b001;
+        # 10 A = 32'h6591b0cf; B = 32'hd2ce6982; control = 3'b100;
 
         # 10 $finish;
     end
