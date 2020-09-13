@@ -8,7 +8,7 @@ module arraySortCheck_control_test;
 
     integer i;
 
-    wire inversion_found, end_of_array; // arraySortCheck_circuit's output
+    wire inversion_found, end_of_array, zero_length_array; // arraySortCheck_circuit's output
     wire sorted, done, load_input, load_index, select_index; // arraySortCheck_control's output
     arraySortCheck_circuit circuit(inversion_found, end_of_array, zero_length_array, load_input, load_index, select_index, array, length, clock, reset);
     arraySortCheck_control control(sorted, done, load_input, load_index, select_index, go, inversion_found, end_of_array, zero_length_array, clock, reset);
@@ -49,7 +49,48 @@ module arraySortCheck_control_test;
 	# 2 array = 7; length = 3; go = 1;
 	# 10 go = 0;
   # 20
-        // Add your own testcases here!
+
+  // Add your own testcases here!
+
+  // Test with length 2, partially unsorted
+  circuit.rf.r[2] <=  32'd1;
+  circuit.rf.r[3] <=  32'd2;
+  circuit.rf.r[4] <=  32'd3;
+  circuit.rf.r[5] <=  32'd2;
+  circuit.rf.r[6] <=  32'd5;
+  # 2 array = 3; length = 2; go = 1;
+  # 10 go = 0;
+  # 20
+
+  // Test 0 length
+	# 2 array = 15; length = 0; go = 1;
+	# 10 go = 0;
+  # 20
+
+  // Test 1 length
+	# 2 array = 31; length = 0; go = 1;
+	# 10 go = 0;
+  # 20
+
+  // Test full array (unsorted)
+	# 2 array = 0; length = 31; go = 1;
+	# 10 go = 0;
+  # 20
+
+  // Test with 2 same values
+  circuit.rf.r[2] <=  32'd1;
+  circuit.rf.r[3] <=  32'd2;
+  circuit.rf.r[4] <=  32'd3;
+  circuit.rf.r[5] <=  32'd3;
+  circuit.rf.r[6] <=  32'd4;
+  # 2 array = 2; length = 5; go = 1;
+  # 10 go = 0;
+  # 20
+
+  // Test full array
+	# 2 array = 0; length = 31; go = 1;
+	# 10 go = 0;
+  # 20
 
         #10 $finish;
     end
