@@ -25,7 +25,6 @@ module alu32(out, overflow, zero, negative, inA, inB, control);
         ({32{(control == `ALU_XOR)}} & (inA ^ inB)) |
         ({32{(control == `ALU_NOR)}} & ~(inA | inB)) |
         ({32{(control == `ALU_ADD)}} & (inA + inB)) |
-        ({32{(control == `ALU_ADDU)}} & (inA + inB)) |
         ({32{(control == `ALU_SUB)}} & (inA - inB)));
     assign zero = (out[31:18] == 14'b0) & (out[17:1] == 17'd0) & ~out[0];
     xor x1(negative, out[31], 1'b0);
