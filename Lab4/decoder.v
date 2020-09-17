@@ -17,12 +17,12 @@ module mips_decode(rd_src, writeenable, alu_src2, alu_op, except, opcode, funct)
 
     wire w_add, w_sub, w_and, w_or, w_nor, w_xor, w_addi, w_andi, w_ori, w_xori;
 
-    assign w_add = (opcode == `OP_OTHER0) & (funct = `OP0_ADD);
-    assign w_sub = (opcode == `OP_OTHER0) & (funct = `OP0_SUB);
-    assign w_and = (opcode == `OP_OTHER0) & (funct = `OP0_AND);
-    assign w_or = (opcode == `OP_OTHER0) & (funct = `OP0_OR);
-    assign w_nor = (opcode == `OP_OTHER0) & (funct = `OP0_NOR);
-    assign w_xor = (opcode == `OP_OTHER0) & (funct = `OP0_XOR);
+    assign w_add = (opcode == `OP_OTHER0) & (funct == `OP0_ADD);
+    assign w_sub = (opcode == `OP_OTHER0) & (funct == `OP0_SUB);
+    assign w_and = (opcode == `OP_OTHER0) & (funct == `OP0_AND);
+    assign w_or = (opcode == `OP_OTHER0) & (funct == `OP0_OR);
+    assign w_nor = (opcode == `OP_OTHER0) & (funct == `OP0_NOR);
+    assign w_xor = (opcode == `OP_OTHER0) & (funct == `OP0_XOR);
 
     assign w_addi = (opcode == `OP_ADDI);
     assign w_andi = (opcode == `OP_ANDI);
