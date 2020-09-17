@@ -29,4 +29,14 @@ module mips_decode(rd_src, writeenable, alu_src2, alu_op, except, opcode, funct)
     assign w_ori = (opcode == `OP_ORI);
     assign w_xori = (opcode == `OP_XORI);
 
+    // assign alu_src2 = ((opcode == `OP_OTHER0) ? 2'b00 : ((opcode == `OP_ADDI) ? 2'b01 : ((opcode == `OP_ANDI | opcode == `OP_ORI | opcode == `OP_XORI) ? 2'b10 : 2'b11)));
+    assign alu_src2 = ((opcode == `OP_OTHER0) ? 2'b00 : ((w_addi) ? 2'b01 : ((w_andi | w_ori | w_xori) ? 2'b10 : 2'b11)));
+    assign writeenable = (w_add | w_sub | w_and | w_or | w_nor | w_xor | w_addi | w_andi | w_ori | w_xori);
+    assign rd_src = (w_addi | w_andi | w_ori | w_xori);
+    assign except = ~writeenable;
+
+    assign alu_op[0] = (w_sub | w_or | w_xor | w_ori | w_xori);
+    assign alu_op[1] = (w_add | w_sub | w_nor | w_xor | w_addi | w_xori);
+    assign alu_op[2] = (w_and | w_or | w_nor | w_xor | w_andi | w_ori | w_xori);
+
 endmodule // mips_decode
