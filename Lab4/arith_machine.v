@@ -66,6 +66,6 @@ endmodule // sign_extender
 module zero_extender (imm_zero, inst);
     output [31:0] imm_zero;
     input [15:0] inst;
-    assign imm_zero = {inst[15:0], {16{1'b0}}};
+    assign imm_zero = {{16{1'b0}}, inst[15:0]};
 
 endmodule // zero_extender
