@@ -62,7 +62,9 @@ module full_machine(except, clock, reset);
 
     alu32 pcplus4(pcPlusFour, , , , PC, 32'h4, `ALU_ADD);
     alu32 branching(branch, , , , pcPlusFour, branchOffset, `ALU_ADD);
-    alu32 mainAlu(out, overflow, zero, negative, rsData, B, alu_op);
+    alu32 mainAlu(out, overflow, zero, negative, rsData, B_out, alu_op);
+    alu32 addm_alu(addm_Data, , , , rtData, data_out, 3'b010);
+
 
 
 
@@ -73,7 +75,10 @@ module full_machine(except, clock, reset);
     mux2v #(32) m_byte_load(byte_load_out, data_out, chosen_byte, byte_load);
     mux3v #(32) m_alu_src2(B, rtData, imm_sign, imm_zero, alu_src2);
     mux4v #(32) m_control_type(nextPC, pcPlusFour, branch, jump, rsData, control_type);
-    mux4v #(32) m_out(chosen_byte[7:0], data_out[7:0], data_out[15:8], data_out[23:16], data_out[31:24], out[1:0]);
+    mux4v #(8) m_out(chosen_byte[7:0], data_out[7:0], data_out[15:8], data_out[23:16], data_out[31:24], out[1:0]);
+
+    mux2v #(32) m_addm_B(B_out, B, 32'b0, addm);
+	mux2v #(32) m_addm_data(rdData, W_data, addm_Data, addm);
    
 
     /* add other modules */
