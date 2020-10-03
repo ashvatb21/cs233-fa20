@@ -177,27 +177,27 @@ if_1:
 
 if_2:
 
-    beq $t5, 0, if_3                 # if (map[i][j].xdir != 0 && map[i][j].ydir == 0)
+    beq $t5, 0, if_3                # if (map[i][j].xdir != 0 && map[i][j].ydir == 0)
     bne $t6, 0, if_3
     li $t4, '_'                     # map[i][j].repr = '_'
 
 if_3:
 
-    bne $t5, 0, if_4                 # if (map[i][j].xdir == 0 && map[i][j].ydir != 0)
+    bne $t5, 0, if_4                # if (map[i][j].xdir == 0 && map[i][j].ydir != 0)
     beq $t6, 0, if_4
     li $t4, '|'                     # map[i][j].repr = '|'
 
 if_4:
 
     mul $t8, $t5, $t6               # map[i][j].xdir * map[i][j].ydir
-    ble $t8, 0, if_5                 # if (map[i][j].xdir * map[i][j].ydir > 0)
-    li $t4, '/'                      # map[i][j].repr = '/'
+    ble $t8, 0, if_5                # if (map[i][j].xdir * map[i][j].ydir > 0)
+    li $t4, '/'                     # map[i][j].repr = '/'
 
 if_5:
 
     mul $t8, $t5, $t6               # map[i][j].xdir * map[i][j].ydir
-    bge $t8, 0, if_6                 # if (map[i][j].xdir * map[i][j].ydir > 0)
-    li $t4, '\'                      # map[i][j].repr = '\'
+    bge $t8, 0, if_6                # if (map[i][j].xdir * map[i][j].ydir > 0)
+    li $t4, '\\'                    # map[i][j].repr = '\'
 
 if_6:
 
