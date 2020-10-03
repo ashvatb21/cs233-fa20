@@ -54,8 +54,8 @@ map:    .word 46, 0, 0, 46, 0, 0, 46, 0, 0, 46, 0, 0, 46, 0, 0, 46, 0, 0, 46, 0
 .globl compare
 
 compare:
-    sub     $t0, $a0, -1
-    sub     $t1, $a1, -1
+    sub     $t0, $a0, -1     # changed
+    sub     $t1, $a1, -1     # changed
     mul     $t2, $t0, $a0   # lhs * (lhs - 1)
     mul     $t3, $t1, $a1   # rhs * (rhs - 1)
     blt     $t2, $t3, less_than
