@@ -145,4 +145,89 @@ end:
 # }
 .globl draw_gradient
 draw_gradient:
+
+    li $t0, 0                       # int num_changed = 0
+    li $t1, 0                       # int i = 0
+
+outer_loop:
+
+    bge $t1, 15, end_outer_loop     # outer for loop condition
+    li $t2, 0                       # int j = 0
+
+inner_loop:
+
+    bge $t2, 15, end_inner_loop     # inner for loop condition
+
+    mul $t3, $t1, 15                # i*15
+    add $t3, $t3, $t2               # (i*15) + j  (1D indexing for 2D array of 15 rows)
+    mul $t3, $t3, 12                # Offset for map[i][j] = 12 bytes
+    add $t3, $a0, $t3               # Offset index for map[i][j]
+
+    lb $t4, 0($t3)                  # loading map[i][j].repr onto register
+    lw $t5, 4($t3)                  # loading map[i][j].xdir onto register
+    lw $t6, 8($t3)                  # loading map[i][j].ydir onto register
+
+    move $t7, $t4                   # char orig = map[i][j].repr
+
+if_1:
+
+    bne $t5, 0, if_2                # if (map[i][j].xdir == 0 && map[i][j].ydir == 0)
+    bne $t6, 0, if_2
+    li $t4, '.'                     # map[i][j].repr = '.'
+
+if_2:
+
+    beq $t5, 0, if_3                 # if (map[i][j].xdir != 0 && map[i][j].ydir == 0)
+    bne $t6, 0, if_3
+    li $t4, '_'                     # map[i][j].repr = '_'
+
+if_3:
+
+    bne $t5, 0, if_4                 # if (map[i][j].xdir == 0 && map[i][j].ydir != 0)
+    beq $t6, 0, if_4
+    li $t4, '|'                     # map[i][j].repr = '|'
+
+if_4:
+
+    mul $t8, $t5, $t6               # map[i][j].xdir * map[i][j].ydir
+    ble $t8, 0, if_5                 # if (map[i][j].xdir * map[i][j].ydir > 0)
+    li $t4, '/'                      # map[i][j].repr = '/'
+
+if_5:
+
+    mul $t8, $t5, $t6               # map[i][j].xdir * map[i][j].ydir
+    bge $t8, 0, if_6                 # if (map[i][j].xdir * map[i][j].ydir > 0)
+    li $t4, '\'                      # map[i][j].repr = '\'
+
+if_6:
+
+    beq $t4, $t7, end_if            # if (map[i][j].repr != orig)
+    add $t0, $t0, 1                 # num_changed += 1
+
+end_if:
+
+    sb $t4, 0($t3)                  # storing updated map[i][j].repr back into struct
+    add $t2, $t2, 1                 # j++
+
+    j inner_loop
+
+end_inner_loop:
+
+    add $t1, $t1, 1                 # i++
+
+    j outer_loop
+
+end_outer_loop:
+
+    move $v0, $t0
     jr      $ra
+
+# repr P P P xdir xdir xdir xdir ydir ydir ydir ydir
+
+# index A[row][col] = A[row ∗ N COLS + col]
+
+# typedef struct {
+#   char repr;
+#   int xdir;
+#   int ydir;
+# } Gradient;
