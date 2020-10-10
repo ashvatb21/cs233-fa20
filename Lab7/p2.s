@@ -10,6 +10,17 @@
 .globl encode_domino
 encode_domino:
 
+        sub $sp, $sp, 36                # Alloc Stack
+        sw $ra, 0($sp)                  # Storing callee save values
+        sw $s0, 4($sp)
+        sw $s1, 8($sp)
+        sw $s2, 12($sp)
+        sw $s3, 16($sp)
+        sw $s4, 20($sp)
+        sw $s5, 24($sp)
+        sw $s6, 28($sp)
+        sw $s7, 32($sp)
+
 if:
 
         bge $a0, $a1, else      # dots1 < dots2 ?
@@ -28,6 +39,17 @@ else:
         j end
 
 end:
+        
+        sw $ra, 0($sp)                  # Restoring callee save values
+        sw $s0, 4($sp)
+        sw $s1, 8($sp)
+        sw $s2, 12($sp)
+        sw $s3, 16($sp)
+        sw $s4, 20($sp)
+        sw $s5, 24($sp)
+        sw $s6, 28($sp)
+        sw $s7, 32($sp)
+        add $sp, $sp, 36                # DeAlloc Stack
 
         jr      $ra
 
@@ -92,444 +114,440 @@ end:
 #     }
 #     return 0;
 # }
-.globl solve
-solve:
+
         # Plan out your registers and their lifetimes ahead of time. You will almost certainly run out of registers if you
         # do not plan how you will use them. If you find yourself reusing too much code, consider using the stack to store
         # some variables like &solution[row * num_cols + col] (caller-saved convention).
 
+.globl solve
+solve:
 
-        # STACK VARIABLES (ALWAYS TO BE SAVED)
-        lw $t0, 0($a0)                  # int num_rows = puzzle->num_rows
-        lw $t1, 4($a0)                  # int num_cols = puzzle->num_cols
-        lw $t2, 8($a0)                  # int max_dots = puzzle->max_dots
-        li $t3, 0                       # int next_row
-        li $t4, 0                       # int next_col
-        li $t5, 0                       # unsigned char* dominos_used[]
-        li $t6, 0                       # unsigned char curr_dots
-        li $t7, 0                       # solution[row * num_cols + col]
-        li $t8, 0                       # solution[(row + 1) * num_cols + col] 
-        li $t9, 0                       # solution[row * num_cols + (col + 1)]
-        li $s3, 0                       # solution[row * num_cols + col] offset
-        li $s4, 0                       # solution[(row + 1) * num_cols + col] offset
-        li $s5, 0                       # solution[row * num_cols + (col + 1)] offset
-        li $s6, 0                       # domino_code
+        sub $sp, $sp, 76                # Alloc Stack
+        sw $ra, 0($sp)                  # Storing callee save values
+        sw $s0, 4($sp)
+        sw $s1, 8($sp)
+        sw $s2, 12($sp)
+        sw $s3, 16($sp)
+        sw $s4, 20($sp)
+        sw $s5, 24($sp)
+        sw $s6, 28($sp)
+        sw $s7, 32($sp)
 
-
-        sub $s0, $t1, 1                 # num_cols - 1
-        add $s1, $a2, 1                 # row + 1
-        add $s2, $a3, 1                 # col + 1
+################################################################################
+        # $a0 = dominosa_question* puzzle
+        # $a1 = unsigned char* solution
+        # $a2 = row
+        # $a3 = col
         
-if_assign:                          
+        # $s0 = num_rows
+        # $s1 = num_cols
+        # $s2 = max_dots
+        # $s3 = next_row
+        # $s4 = next_col
+        # $s5 = dominos_used*[]
+        # $s6 = curr_dots
+        # $s7 = domino_code
 
-        bne $a3, $s0, else_assign       # !(col == num_cols - 1)
-        move $t3, $s1                   # int next_row = row + 1
+        # $t0 = solution[row * num_cols + col] offset
+        # $t1 = solution[row * num_cols + col]
+        # $t2 = solution[(row + 1) * num_cols + col] offset
+        # $t3 = solution[(row + 1) * num_cols + col]
+        # $t4 = solution[row * num_cols + (col + 1)] offset
+        # $t5 = solution[row * num_cols + (col + 1)]
 
-        j end_if_assign
+        # $t6 - $t9 = Temporaries
+################################################################################
+
+        lw $s0, 0($a0)                  # int num_rows = puzzle->num_rows
+        lw $s1, 4($a0)                  # int num_cols = puzzle->num_cols
+        lw $s2, 8($a0)                  # int max_dots = puzzle->max_dots
+
+        sub $t7, $s1, 1                 # num_cols - 1
+
+if_assign:
+
+        bne $a3, $t7, else_assign       # !(col == num_cols - 1)
+        add $s3, $a2, 1                 # int next_row = row + 1
+
+        j end_assign
 
 else_assign:
 
-        move $t3, $a2                   # int next_row = row
+        move $s3, $a2                   # int next_row = row
 
-end_if_assign:
+end_assign:
 
-        rem $t4, $s2, $t1               # int next_col = (col + 1) % num_cols
-        lw $t5, 268($a0)                # unsigned char* dominos_used = puzzle->dominos_used
+        add $t7, $a3, 1                 # col + 1
+        rem $s4, $t7, $s1               # int next_col = (col + 1) % num_cols
 
+        la $s5, 268($a0)                # unsigned char* dominos_used = puzzle->dominos_used
 
-        bge $a2, $t0, if1               # if (row >= num_rows) ||
-        blt $a3, $t1, end_if1           # if !(col >= num_cols)
+if1_prep:
 
-if1:    
+        bge $a2, $s0, if1               # if (row >= num_rows) ||
+        blt $a3, $s1, end_if1           # if !(col >= num_cols)
 
-        li $v0, 1                     # return 1
+if1:
+
+        lw $ra, 0($sp)                  # Restoring callee save values
+        lw $s0, 4($sp)
+        lw $s1, 8($sp)
+        lw $s2, 12($sp)
+        lw $s3, 16($sp)
+        lw $s4, 20($sp)
+        lw $s5, 24($sp)
+        lw $s6, 28($sp)
+        lw $s7, 32($sp)
+        add $sp, $sp, 76                # DeAlloc Stack 
+
+        li $v0, 1                       # return 1
+
         jr $ra
 
 end_if1:
 
-        # $t7 - $t9 defines
-        mul $s3, $a2, $t1               # row * num_cols
-        add $s3, $s3, $a3               # [row * num_cols + col]
-        add $s3, $s3, $a1               # solution[row * num_cols + col] offset
-        lb $t7, 0($s3)                  # solution[row * num_cols + col]
+        # $t0 - $t5 Defines
+        mul $t0, $a2, $s1               # row * num_cols
+        add $t0, $t0, $a3               # [row * num_cols + col]
+        add $t0, $t0, $a1               # solution[row * num_cols + col] offset
+        lb $t1, 0($t0)                  # solution[row * num_cols + col]
         
-        add $s4, $a2, 1                 # row + 1
-        mul $s4, $s4, $t1               # (row + 1) * num_cols
-        add $s4, $s4, $a3               # [(row + 1) * num_cols + col]
-        add $s4, $s4, $a1               # solution[(row + 1) * num_cols + col] offset
-        lb $t8, 0($s4)                  # solution[(row + 1) * num_cols + col]
+        add $t2, $a2, 1                 # row + 1
+        mul $t2, $t2, $s1               # (row + 1) * num_cols
+        add $t2, $t2, $a3               # [(row + 1) * num_cols + col]
+        add $t2, $t2, $a1               # solution[(row + 1) * num_cols + col] offset
+        lb $t3, 0($t2)                  # solution[(row + 1) * num_cols + col]
 
-        mul $s5, $a2, $t1               # row * num_cols
-        add $s5, $s5, $a3               # [row * num_cols + col]
-        add $s5, $s5, 1                 # [row * num_cols + (col + 1)]
-        add $s5, $s5, $a1               # solution[row * num_cols + (col + 1)] offset
-        lb $t9, 0($s5)                  # solution[row * num_cols + (col + 1)]
+        mul $t4, $a2, $s1               # row * num_cols
+        add $t4, $t4, $a3               # [row * num_cols + col]
+        add $t4, $t4, 1                 # [row * num_cols + (col + 1)]
+        add $t4, $t4, $a1               # solution[row * num_cols + (col + 1)] offset
+        lb $t5, 0($t4)                  # solution[row * num_cols + (col + 1)]        
+
 
 if2:
 
-        beq $t7, 0, end_if2             # if !(solution[row * num_cols + col] != 0) 
+        beq $t1, 0, end_if2             # if !(solution[row * num_cols + col] != 0)
 
-        sub $sp, $sp, 76
-        sw $ra, 0($sp)
-        sw $a0, 4($sp)
-        sw $a1, 8($sp)
-        sw $a2, 12($sp)
-        sw $a3, 16($sp)
-        sw $t0, 20($sp)
-        sw $t1, 24($sp)
-        sw $t2, 28($sp)
-        sw $t3, 32($sp)
-        sw $t4, 36($sp)
-        sw $t5, 40($sp)
-        sw $t6, 44($sp)
-        sw $t7, 48($sp)
-        sw $t8, 52($sp)
-        sw $t9, 56($sp)
-        sw $s3, 60($sp)
-        sw $s4, 64($sp)
-        sw $s5, 68($sp)
-        sw $s6, 72($sp)
+        sw $a0, 36($sp)                 # Storing caller save values
+        sw $a1, 40($sp)
+        sw $a2, 44($sp)
+        sw $a3, 48($sp)
+        sw $t0, 52($sp)
+        sw $t1, 56($sp)
+        sw $t2, 60($sp)
+        sw $t3, 64($sp)
+        sw $t4, 68($sp)
+        sw $t5, 72($sp)
 
-        move $a2, $t3                   # next_row
-        move $a3, $t4                   # next_col
+        move $a2, $s3                   # next_row
+        move $s3, $s4                   # next_col
 
         jal solve                       # solve(puzzle, solution, next_row, next_col)
 
-        lw $ra, 0($sp)
-        lw $a0, 4($sp)
-        lw $a1, 8($sp)
-        lw $a2, 12($sp)
-        lw $a3, 16($sp)
-        lw $t0, 20($sp)
-        lw $t1, 24($sp)
-        lw $t2, 28($sp)
-        lw $t3, 32($sp)
-        lw $t4, 36($sp)
-        lw $t5, 40($sp)
-        lw $t6, 44($sp)
-        lw $t7, 48($sp)
-        lw $t8, 52($sp)
-        lw $t9, 56($sp)
-        lw $s3, 60($sp)
-        lw $s4, 64($sp)
-        lw $s5, 68($sp)
-        lw $s6, 72($sp)
-        add $sp, $sp, 76
+        lw $ra, 0($sp)                  # Restoring caller save values
+        lw $a0, 36($sp)                 
+        lw $a1, 40($sp)
+        lw $a2, 44($sp)
+        lw $a3, 48($sp)
+        lw $t0, 52($sp)
+        lw $t1, 56($sp)
+        lw $t2, 60($sp)
+        lw $t3, 64($sp)
+        lw $t4, 68($sp)
+        lw $t5, 72($sp)
 
-        jr $ra 
+        lw $ra, 0($sp)                  # Restoring callee save values
+        lw $s0, 4($sp)
+        lw $s1, 8($sp)
+        lw $s2, 12($sp)
+        lw $s3, 16($sp)
+        lw $s4, 20($sp)
+        lw $s5, 24($sp)
+        lw $s6, 28($sp)
+        lw $s7, 32($sp)
+        add $sp, $sp, 76                # DeAlloc Stack
+
+        jr $ra
 
 end_if2:
 
-        # $t6 define
-        mul $s0, $a2, $t1               # row * num_cols
-        add $s0, $s0, $a3               # [row * num_cols + col]
-        la $s1, 12($a0)                 # Address of puzzle->board[0]
-        add $s1, $s1, $s0               # Offset for board[row * num_cols + col]
-        lb $t6, 0($s1)                  # unsigned char curr_dots = puzzle->board[row * num_cols + col]
+        mul $t7, $a2, $s1               # row * num_cols
+        add $t7, $t7, $a3               # [row * num_cols + col]
+        la $t8, 12($a0)                 # Address of puzzle->board[0]
+        add $t8, $t8, $t7               # Offset for board[row * num_cols + col]
+        lb $s6, 0($t8)                  # unsigned char curr_dots = puzzle->board[row * num_cols + col]
+
+
+        # FIRST BIG IF SECTION
+
 
 if_outer1:
 
-        sub $s0, $t0, 1                 # num_rows - 1
+        sub $t7, $s0, 1                 # num_rows - 1
 
-        bge $a2, $s0, if_outer2          # if !(row < num_rows - 1) &&
-        bne $t8, 0, if_outer2            # if !( solution[(row + 1) * num_cols + col] == 0)
+        bge $a2, $t7, if_outer2         # if !(row < num_rows - 1) &&
+        bne $t3, 0, if_outer2           # if !( solution[(row + 1) * num_cols + col] == 0)
 
-        sub $sp, $sp, 76
-        sw $ra, 0($sp)
-        sw $a0, 4($sp)
-        sw $a1, 8($sp)
-        sw $a2, 12($sp)
-        sw $a3, 16($sp)
-        sw $t0, 20($sp)
-        sw $t1, 24($sp)
-        sw $t2, 28($sp)
-        sw $t3, 32($sp)
-        sw $t4, 36($sp)
-        sw $t5, 40($sp)
-        sw $t6, 44($sp)
-        sw $t7, 48($sp)
-        sw $t8, 52($sp)
-        sw $t9, 56($sp)
-        sw $s3, 60($sp)
-        sw $s4, 64($sp)
-        sw $s5, 68($sp)
-        sw $s6, 72($sp)
+        sw $a0, 36($sp)                 # Storing caller save values
+        sw $a1, 40($sp)
+        sw $a2, 44($sp)
+        sw $a3, 48($sp)
+        sw $t0, 52($sp)
+        sw $t1, 56($sp)
+        sw $t2, 60($sp)
+        sw $t3, 64($sp)
+        sw $t4, 68($sp)
+        sw $t5, 72($sp)
 
-        add $s0, $a2, 1                 # row + 1
-        mul $s0, $s0, $t1               # (row + 1) * num_cols
-        add $s0, $s0, $a3               # [(row + 1) * num_cols + col]
-        la $s1, 12($a0)                 # Address of puzzle->board[0]
-        add $s1, $s1, $s0               # Offset for board[(row + 1) * num_cols + col]
-        lb $s2, 0($s1)                  # puzzle->board[(row + 1) * num_cols + col]
+        add $t7, $a2, 1                 # row + 1
+        mul $t7, $t7, $s1               # (row + 1) * num_cols
+        add $t7, $t7, $a3               # [(row + 1) * num_cols + col]
+        la $t8, 12($a0)                 # Address of puzzle->board[0]
+        add $t8, $t8, $t7               # Offset for board[(row + 1) * num_cols + col]
+        lb $t9, 0($t8)                  # puzzle->board[(row + 1) * num_cols + col]
 
-        move $a0, $t6                   # curr_dots
-        move $a1, $s2                   # puzzle->board[(row + 1) * num_cols + col]
-        move $a2, $t2                   # max_dots
+        move $a0, $s6                   # curr_dots
+        move $a1, $t9                   # puzzle->board[(row + 1) * num_cols + col]
+        move $a2, $s2                   # max_dots
 
         jal encode_domino
 
-        lw $ra, 0($sp)
-        lw $a0, 4($sp)
-        lw $a1, 8($sp)
-        lw $a2, 12($sp)
-        lw $a3, 16($sp)
-        lw $t0, 20($sp)
-        lw $t1, 24($sp)
-        lw $t2, 28($sp)
-        lw $t3, 32($sp)
-        lw $t4, 36($sp)
-        lw $t5, 40($sp)
-        lw $t6, 44($sp)
-        lw $t7, 48($sp)
-        lw $t8, 52($sp)
-        lw $t9, 56($sp)
-        lw $s3, 60($sp)
-        lw $s4, 64($sp)
-        lw $s5, 68($sp)
-        lw $s6, 72($sp)
-        add $sp, $sp, 76
+        lw $ra, 0($sp)                  # Restoring caller save values
+        lw $a0, 36($sp)                 
+        lw $a1, 40($sp)
+        lw $a2, 44($sp)
+        lw $a3, 48($sp)
+        lw $t0, 52($sp)
+        lw $t1, 56($sp)
+        lw $t2, 60($sp)
+        lw $t3, 64($sp)
+        lw $t4, 68($sp)
+        lw $t5, 72($sp)
 
-        move $s6, $v0                   # int domino_code 
+        move $s7, $v0                   # int domino_code
 
 if_inner1:
 
-        add $s0, $t5, $s6               # dominos_used[domino_code] offset
-        lb $s1, 0($s0)                  # dominos_used[domino_code]
+        add $t7, $s5, $s7               # dominos_used[domino_code] offset
+        lb $t8, 0($t7)                  # dominos_used[domino_code]
 
-        bne $s1, 0, end_if_inner1       # if !(dominos_used[domino_code] == 0)
+        bne $t8, 0, end_if_inner1       # if !(dominos_used[domino_code] == 0)
 
-        li $s1, 1                       # dominos_used[domino_code] = 1
-        lb $s1, 0($s0)                  # storing value back into memory
+        li $t8, 1                       # dominos_used[domino_code] = 1
+        sb $t8, 0($t7)                  # storing dominos_used[domino_code]
 
-        move $t7, $s6                   # solution[row * num_cols + col] = domino_code
-        sb $t7, 0($s3)                  # storing solution[row * num_cols + col]
+        move $t1, $s7                   # solution[row * num_cols + col] = domino_code
+        sb $t1, 0($t0)                  # storing solution[row * num_cols + col]
         
-        move $t8, $s6                   # solution[(row + 1) * num_cols + col] = domino_code
-        sb $t8, 0($s4)                  # storing solution[(row + 1) * num_cols + col]
+        move $t3, $s7                   # solution[(row + 1) * num_cols + col] = domino_code
+        sb $t3, 0($t2)                  # storing solution[(row + 1) * num_cols + col] 
 
+if_inner_inner1:
 
-if_inner2:
+        sw $a0, 36($sp)                 # Storing caller save values
+        sw $a1, 40($sp)
+        sw $a2, 44($sp)
+        sw $a3, 48($sp)
+        sw $t0, 52($sp)
+        sw $t1, 56($sp)
+        sw $t2, 60($sp)
+        sw $t3, 64($sp)
+        sw $t4, 68($sp)
+        sw $t5, 72($sp)
 
-        sub $sp, $sp, 76
-        sw $ra, 0($sp)
-        sw $a0, 4($sp)
-        sw $a1, 8($sp)
-        sw $a2, 12($sp)
-        sw $a3, 16($sp)
-        sw $t0, 20($sp)
-        sw $t1, 24($sp)
-        sw $t2, 28($sp)
-        sw $t3, 32($sp)
-        sw $t4, 36($sp)
-        sw $t5, 40($sp)
-        sw $t6, 44($sp)
-        sw $t7, 48($sp)
-        sw $t8, 52($sp)
-        sw $t9, 56($sp)
-        sw $s3, 60($sp)
-        sw $s4, 64($sp)
-        sw $s5, 68($sp)
-        sw $s6, 72($sp)        
-
-        move $a2, $t3                   # next_row
-        move $a3, $t4                   # next_col
+        move $a2, $s3                   # next_row
+        move $a3, $s4                   # next_col
 
         jal solve
 
-        lw $ra, 0($sp)
-        lw $a0, 4($sp)
-        lw $a1, 8($sp)
-        lw $a2, 12($sp)
-        lw $a3, 16($sp)
-        lw $t0, 20($sp)
-        lw $t1, 24($sp)
-        lw $t2, 28($sp)
-        lw $t3, 32($sp)
-        lw $t4, 36($sp)
-        lw $t5, 40($sp)
-        lw $t6, 44($sp)
-        lw $t7, 48($sp)
-        lw $t8, 52($sp)
-        lw $t9, 56($sp)
-        lw $s3, 60($sp)
-        lw $s4, 64($sp)
-        lw $s5, 68($sp)
-        lw $s6, 72($sp)
-        add $sp, $sp, 76
+        lw $ra, 0($sp)                  # Restoring caller save values
+        lw $a0, 36($sp)                 
+        lw $a1, 40($sp)
+        lw $a2, 44($sp)
+        lw $a3, 48($sp)
+        lw $t0, 52($sp)
+        lw $t1, 56($sp)
+        lw $t2, 60($sp)
+        lw $t3, 64($sp)
+        lw $t4, 68($sp)
+        lw $t5, 72($sp)
 
-        bne $v0, 1, end_if_inner2       # if !(solve(puzzle, solution, next_row, next_col))
-        li $v0, 1                     # return 1
+        bne $v0, 1, end_if_inner_inner1 # if !(solve(puzzle, solution, next_row, next_col))       
+
+        lw $ra, 0($sp)                  # Restoring callee save values
+        lw $s0, 4($sp)
+        lw $s1, 8($sp)
+        lw $s2, 12($sp)
+        lw $s3, 16($sp)
+        lw $s4, 20($sp)
+        lw $s5, 24($sp)
+        lw $s6, 28($sp)
+        lw $s7, 32($sp)
+        add $sp, $sp, 76                # DeAlloc Stack
+
+        li $v0, 1                       # return 1
         jr $ra
 
-end_if_inner2:
+end_if_inner_inner1:
 
-        add $s0, $t5, $s6               # dominos_used[domino_code] offset
-        lb $s1, 0($s0)                  # dominos_used[domino_code]
-        li $s1, 0                       # dominos_used[domino_code] = 0
-        lb $s1, 0($s0)                  # storing value back into memory
+        add $t7, $s5, $s7               # dominos_used[domino_code] offset
+        lb $t8, 0($t7)                  # dominos_used[domino_code]
+        li $t8, 0                       # dominos_used[domino_code] = 0
+        sb $t8, 0($t7)                  # storing dominos_used[domino_code]
 
-        move $t7, $zero                 # solution[row * num_cols + col] = 0
-        sb $t7, 0($s3)                  # storing solution[row * num_cols + col]
+        li $t1, 0                       # solution[row * num_cols + col] = 0
+        sb $t1, 0($t0)                  # storing solution[row * num_cols + col]
         
-        move $t8, $zero                 # solution[(row + 1) * num_cols + col] = 0
-        sb $t8, 0($s4)                  # storing solution[(row + 1) * num_cols + col]
+        li $t3, 0                       # solution[(row + 1) * num_cols + col] = 0
+        sb $t3, 0($t2)                  # storing solution[(row + 1) * num_cols + col] 
+
+end_if_inner1:
+
+        # NO COMMANDS
 
 
-
-# SECOND IF SECTION
+        # SECOND BIG IF SECTION
 
 
 if_outer2:
 
-        sub $s0, $t1, 1                 # num_col - 1
+        sub $t7, $s1, 1                 # num_col - 1
 
-        bge $a3, $s0, end_code               # if !(col < num_col - 1) &&
-        bne $t9, 0, end_code                 # if !( solution[row * num_cols + (col + 1)] == 0)
+        bge $a3, $t7, end_solve         # if !(col < num_col - 1) &&
+        bne $t4, 0, end_solve           # if !( solution[row * num_cols + (col + 1)] == 0)
 
-        sub $sp, $sp, 76
-        sw $ra, 0($sp)
-        sw $a0, 4($sp)
-        sw $a1, 8($sp)
-        sw $a2, 12($sp)
-        sw $a3, 16($sp)
-        sw $t0, 20($sp)
-        sw $t1, 24($sp)
-        sw $t2, 28($sp)
-        sw $t3, 32($sp)
-        sw $t4, 36($sp)
-        sw $t5, 40($sp)
-        sw $t6, 44($sp)
-        sw $t7, 48($sp)
-        sw $t8, 52($sp)
-        sw $t9, 56($sp)
-        sw $s3, 60($sp)
-        sw $s4, 64($sp)
-        sw $s5, 68($sp)
-        sw $s6, 72($sp)
+        sw $a0, 36($sp)                 # Storing caller save values
+        sw $a1, 40($sp)
+        sw $a2, 44($sp)
+        sw $a3, 48($sp)
+        sw $t0, 52($sp)
+        sw $t1, 56($sp)
+        sw $t2, 60($sp)
+        sw $t3, 64($sp)
+        sw $t4, 68($sp)
+        sw $t5, 72($sp)
 
-        mul $s0, $a2, $t1               # row * num_cols
-        add $s0, $s0, $a3               # [row * num_cols + col]
-        add $s0, $s0, 1                 # [row * num_cols + (col + 1)]
-        la $s1, 12($a0)                 # Address of puzzle->board[0]
-        add $s1, $s1, $s0               # Offset for board[row * num_cols + (col + 1)]
-        lb $s2, 0($s1)                  # puzzle->board[row * num_cols + (col + 1)]
+        mul $t7, $a2, $s1               # row * num_cols
+        add $t7, $t7, $a3               # [row * num_cols + col]
+        add $t7, $t7, 1                 # [row * num_cols + (col + 1)]
+        la $t8, 12($a0)                 # Address of puzzle->board[0]
+        add $t8, $t8, $t7               # Offset for board[row * num_cols + (col + 1)]
+        lb $t9, 0($t8)                  # puzzle->board[row * num_cols + (col + 1)]
 
-        move $a0, $t6                   # curr_dots
-        move $a1, $s2                   # puzzle->board[row * num_cols + (col + 1)]
-        move $a2, $t2                   # max_dots
+        move $a0, $s6                   # curr_dots
+        move $a1, $t9                   # puzzle->board[(row + 1) * num_cols + col]
+        move $a2, $s2                   # max_dots
 
         jal encode_domino
 
-        lw $ra, 0($sp)
-        lw $a0, 4($sp)
-        lw $a1, 8($sp)
-        lw $a2, 12($sp)
-        lw $a3, 16($sp)
-        lw $t0, 20($sp)
-        lw $t1, 24($sp)
-        lw $t2, 28($sp)
-        lw $t3, 32($sp)
-        lw $t4, 36($sp)
-        lw $t5, 40($sp)
-        lw $t6, 44($sp)
-        lw $t7, 48($sp)
-        lw $t8, 52($sp)
-        lw $t9, 56($sp)
-        lw $s3, 60($sp)
-        lw $s4, 64($sp)
-        lw $s5, 68($sp)
-        lw $s6, 72($sp)
-        add $sp, $sp, 76
+        lw $ra, 0($sp)                  # Restoring caller save values
+        lw $a0, 36($sp)                 
+        lw $a1, 40($sp)
+        lw $a2, 44($sp)
+        lw $a3, 48($sp)
+        lw $t0, 52($sp)
+        lw $t1, 56($sp)
+        lw $t2, 60($sp)
+        lw $t3, 64($sp)
+        lw $t4, 68($sp)
+        lw $t5, 72($sp)
 
-        move $s6, $v0                   # int domino_code 
+        move $s7, $v0                   # int domino_code
 
-if_inner3:
+if_inner2:
 
-        add $s0, $t5, $s6               # dominos_used[domino_code] offset
-        lb $s1, 0($s0)                  # dominos_used[domino_code]
+        add $t7, $s5, $s7               # dominos_used[domino_code] offset
+        lb $t8, 0($t7)                  # dominos_used[domino_code]
 
-        bne $s1, 0, end_if_inner3       # if !(dominos_used[domino_code] == 0)
+        bne $t8, 0, end_if_inner2       # if !(dominos_used[domino_code] == 0)
 
-        li $s1, 1                       # dominos_used[domino_code] = 1
-        lb $s1, 0($s0)                  # storing value back into memory
+        li $t8, 1                       # dominos_used[domino_code] = 1
+        sb $t8, 0($t7)                  # storing dominos_used[domino_code]
 
-        move $t7, $s6                   # solution[row * num_cols + col] = domino_code
-        sb $t7, 0($s3)                  # storing solution[row * num_cols + col]
+        move $t1, $s7                   # solution[row * num_cols + col] = domino_code
+        sb $t1, 0($t0)                  # storing solution[row * num_cols + col]
         
-        move $t9, $s6                   # solution[(row + 1) * num_cols + col] = domino_code
-        sb $t9, 0($s5)                  # storing solution[row * num_cols + (col + 1)]
+        move $t5, $s7                   # solution[row * num_cols + (col + 1)] = domino_code
+        sb $t5, 0($t4)                  # storing solution[row * num_cols + (col + 1)] 
 
+if_inner_inner2:
 
-if_inner4:
+        sw $a0, 36($sp)                 # Storing caller save values
+        sw $a1, 40($sp)
+        sw $a2, 44($sp)
+        sw $a3, 48($sp)
+        sw $t0, 52($sp)
+        sw $t1, 56($sp)
+        sw $t2, 60($sp)
+        sw $t3, 64($sp)
+        sw $t4, 68($sp)
+        sw $t5, 72($sp)
 
-        sub $sp, $sp, 76
-        sw $ra, 0($sp)
-        sw $a0, 4($sp)
-        sw $a1, 8($sp)
-        sw $a2, 12($sp)
-        sw $a3, 16($sp)
-        sw $t0, 20($sp)
-        sw $t1, 24($sp)
-        sw $t2, 28($sp)
-        sw $t3, 32($sp)
-        sw $t4, 36($sp)
-        sw $t5, 40($sp)
-        sw $t6, 44($sp)
-        sw $t7, 48($sp)
-        sw $t8, 52($sp)
-        sw $t9, 56($sp)
-        sw $s3, 60($sp)
-        sw $s4, 64($sp)
-        sw $s5, 68($sp)
-        sw $s6, 72($sp)        
-
-        move $a2, $t3                   # next_row
-        move $a3, $t4                   # next_col
+        move $a2, $s3                   # next_row
+        move $a3, $s4                   # next_col
 
         jal solve
 
-        lw $ra, 0($sp)
-        lw $a0, 4($sp)
-        lw $a1, 8($sp)
-        lw $a2, 12($sp)
-        lw $a3, 16($sp)
-        lw $t0, 20($sp)
-        lw $t1, 24($sp)
-        lw $t2, 28($sp)
-        lw $t3, 32($sp)
-        lw $t4, 36($sp)
-        lw $t5, 40($sp)
-        lw $t6, 44($sp)
-        lw $t7, 48($sp)
-        lw $t8, 52($sp)
-        lw $t9, 56($sp)
-        lw $s3, 60($sp)
-        lw $s4, 64($sp)
-        lw $s5, 68($sp)
-        lw $s6, 72($sp)
-        add $sp, $sp, 76
+        lw $ra, 0($sp)                  # Restoring caller save values
+        lw $a0, 36($sp)                 
+        lw $a1, 40($sp)
+        lw $a2, 44($sp)
+        lw $a3, 48($sp)
+        lw $t0, 52($sp)
+        lw $t1, 56($sp)
+        lw $t2, 60($sp)
+        lw $t3, 64($sp)
+        lw $t4, 68($sp)
+        lw $t5, 72($sp)
 
-        bne $v0, 1, end_if_inner4       # if !(solve(puzzle, solution, next_row, next_col))
-        li $v0, 1                     # return 1
+        bne $v0, 1, end_if_inner_inner2 # if !(solve(puzzle, solution, next_row, next_col))       
+
+        lw $ra, 0($sp)                  # Restoring callee save values
+        lw $s0, 4($sp)
+        lw $s1, 8($sp)
+        lw $s2, 12($sp)
+        lw $s3, 16($sp)
+        lw $s4, 20($sp)
+        lw $s5, 24($sp)
+        lw $s6, 28($sp)
+        lw $s7, 32($sp)
+        add $sp, $sp, 76                # DeAlloc Stack
+
+        li $v0, 1                       # return 1
         jr $ra
 
-end_if_inner4:
+end_if_inner_inner2:
 
-        add $s0, $t5, $s6               # dominos_used[domino_code] offset
-        lb $s1, 0($s0)                  # dominos_used[domino_code]
-        li $s1, 0                       # dominos_used[domino_code] = 0
-        lb $s1, 0($s0)                  # storing value back into memory
+        add $t7, $s5, $s7               # dominos_used[domino_code] offset
+        lb $t8, 0($t7)                  # dominos_used[domino_code]
+        li $t8, 0                       # dominos_used[domino_code] = 0
+        sb $t8, 0($t7)                  # storing dominos_used[domino_code]
 
-        move $t7, $zero                 # solution[row * num_cols + col] = 0
-        sb $t7, 0($s3)                  # storing solution[row * num_cols + col]
+        li $t1, 0                       # solution[row * num_cols + col] = 0
+        sb $t1, 0($t0)                  # storing solution[row * num_cols + col]
         
-        move $t9, $zero                 # solution[row * num_cols + (col + 1)] = 0
-        sb $t9, 0($s5)                  # storing solution[row * num_cols + (col + 1)]
+        li $t5, 0                       # solution[row * num_cols + (col + 1)] = 0
+        sb $t5, 0($t4)                  # storing solution[row * num_cols + (col + 1)]
 
+end_if_inner2:
 
-end_code:
+        # NO COMMANDS
 
-        li $v0, 0                     # return 0
+end_solve:
+
+        lw $ra, 0($sp)                  # Restoring callee save values
+        lw $s0, 4($sp)
+        lw $s1, 8($sp)
+        lw $s2, 12($sp)
+        lw $s3, 16($sp)
+        lw $s4, 20($sp)
+        lw $s5, 24($sp)
+        lw $s6, 28($sp)
+        lw $s7, 32($sp)
+        add $sp, $sp, 76
+
+        li $v0, 0                       # return 0
 
         jr      $ra
 
