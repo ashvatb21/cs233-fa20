@@ -180,7 +180,7 @@ end_assign:
         add $t7, $a3, 1                 # col + 1
         rem $s4, $t7, $s1               # int next_col = (col + 1) % num_cols
 
-        la $s5, 268($a0)                # unsigned char* dominos_used = puzzle->dominos_used
+        add $s5, $a0, 268                # unsigned char* dominos_used = puzzle->dominos_used
 
 if1_prep:
 
@@ -210,19 +210,19 @@ end_if1:
         mul $t0, $a2, $s1               # row * num_cols
         add $t0, $t0, $a3               # [row * num_cols + col]
         add $t0, $t0, $a1               # solution[row * num_cols + col] offset
-        lb $t1, 0($t0)                  # solution[row * num_cols + col]
+        lbu $t1, 0($t0)                 # solution[row * num_cols + col]
         
         add $t2, $a2, 1                 # row + 1
         mul $t2, $t2, $s1               # (row + 1) * num_cols
         add $t2, $t2, $a3               # [(row + 1) * num_cols + col]
         add $t2, $t2, $a1               # solution[(row + 1) * num_cols + col] offset
-        lb $t3, 0($t2)                  # solution[(row + 1) * num_cols + col]
+        lbu $t3, 0($t2)                  # solution[(row + 1) * num_cols + col]
 
         mul $t4, $a2, $s1               # row * num_cols
         add $t4, $t4, $a3               # [row * num_cols + col]
         add $t4, $t4, 1                 # [row * num_cols + (col + 1)]
         add $t4, $t4, $a1               # solution[row * num_cols + (col + 1)] offset
-        lb $t5, 0($t4)                  # solution[row * num_cols + (col + 1)]        
+        lbu $t5, 0($t4)                  # solution[row * num_cols + (col + 1)]        
 
 
 if2:
@@ -241,7 +241,7 @@ if2:
         sw $t5, 72($sp)
 
         move $a2, $s3                   # next_row
-        move $s3, $s4                   # next_col
+        move $a3, $s4                   # next_col
 
         jal solve                       # solve(puzzle, solution, next_row, next_col)
 
@@ -274,7 +274,7 @@ end_if2:
 
         mul $t7, $a2, $s1               # row * num_cols
         add $t7, $t7, $a3               # [row * num_cols + col]
-        la $t8, 12($a0)                 # Address of puzzle->board[0]
+        add $t8, $a0, 12                # Address of puzzle->board[0]
         add $t8, $t8, $t7               # Offset for board[row * num_cols + col]
         lb $s6, 0($t8)                  # unsigned char curr_dots = puzzle->board[row * num_cols + col]
 
@@ -303,7 +303,7 @@ if_outer1:
         add $t7, $a2, 1                 # row + 1
         mul $t7, $t7, $s1               # (row + 1) * num_cols
         add $t7, $t7, $a3               # [(row + 1) * num_cols + col]
-        la $t8, 12($a0)                 # Address of puzzle->board[0]
+        add $t8, $a0, 12                 # Address of puzzle->board[0]
         add $t8, $t8, $t7               # Offset for board[(row + 1) * num_cols + col]
         lb $t9, 0($t8)                  # puzzle->board[(row + 1) * num_cols + col]
 
@@ -415,7 +415,7 @@ if_outer2:
         sub $t7, $s1, 1                 # num_col - 1
 
         bge $a3, $t7, end_solve         # if !(col < num_col - 1) &&
-        bne $t4, 0, end_solve           # if !( solution[row * num_cols + (col + 1)] == 0)
+        bne $t5, 0, end_solve           # if !(solution[row * num_cols + (col + 1)] == 0)
 
         sw $a0, 36($sp)                 # Storing caller save values
         sw $a1, 40($sp)
@@ -431,12 +431,12 @@ if_outer2:
         mul $t7, $a2, $s1               # row * num_cols
         add $t7, $t7, $a3               # [row * num_cols + col]
         add $t7, $t7, 1                 # [row * num_cols + (col + 1)]
-        la $t8, 12($a0)                 # Address of puzzle->board[0]
+        add $t8, $a0, 12                # Address of puzzle->board[0]
         add $t8, $t8, $t7               # Offset for board[row * num_cols + (col + 1)]
         lb $t9, 0($t8)                  # puzzle->board[row * num_cols + (col + 1)]
 
         move $a0, $s6                   # curr_dots
-        move $a1, $t9                   # puzzle->board[(row + 1) * num_cols + col]
+        move $a1, $t9                   # puzzle->board[row * num_cols + (col + 1)]
         move $a2, $s2                   # max_dots
 
         jal encode_domino
