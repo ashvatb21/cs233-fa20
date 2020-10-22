@@ -49,28 +49,16 @@ main:
 
 #Fill in your code here
 
-        sub     $sp, $sp, 8
+        sub     $sp, $sp, 20
         sw      $ra, 0($sp)
         sw      $s0, 4($sp)
-
-        # lw      $v0, 0xffff001c($0)             # read current time
-        # add     $v0, $v0, 25000                    # add 50 to current time
-        # sw      $v0, 0xffff001c($0)             # request timer interrupt in 50 cycles                
+        sw      $s1, 12($sp)
+        sw      $s2, 16($sp)
 
         li      $t0, 10
         sw      $t0, VELOCITY                   # drive
 
-        li      $s0, 0
-
-        # lw      $s1, BOT_X                      # x value
-        # lw      $s2, BOT_Y                      # y value
-        # bne     $s1, 4, end_if1
-        # bne     $s2, 4, end_if1
-
-        # li      $s0, 0
-        # sw      $s0, VELOCITY
-
-# end_if1:
+        li      $s0, 0                          # Number of corn ears picked up
 
         j infinite
 
@@ -280,9 +268,12 @@ jump_infinite:
         j       infinite              # Don't remove this! If this is removed, then your code will not be graded!!!
 
         
-
-        add $sp, $sp, 8
-        jr $ra
+        lw      $ra, 0($sp)
+        lw      $s0, 4($sp)
+        lw      $s1, 12($sp)
+        lw      $s2, 16($sp)
+        add     $sp, $sp, 20
+        jr      $ra
 
 .kdata
 chunkIH:    .space 8  #TODO: Decrease this
