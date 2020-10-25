@@ -807,7 +807,7 @@ bonk_interrupt:
         j       interrupt_dispatch      # see if other interrupts are waiting
 
 request_puzzle_interrupt:
-        sw      $0, REQUEST_PUZZLE_ACK
+        # sw      $0, REQUEST_PUZZLE_ACK
 #Fill in you code here
 
         # lw      $t0, REQUEST_PUZZLE_ACK
