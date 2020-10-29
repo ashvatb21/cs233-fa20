@@ -14,4 +14,6 @@ module pipelined_adding_machine(out, clk, reset);
 
     register #(32, 32'd0) Register(out, next_data, clk, /* enable */1'b1, reset);
 
+    register #(32) pipeline_reg(pipeline_out, data, clk, 1'b1, reset);
+
 endmodule // pipelined_machine
