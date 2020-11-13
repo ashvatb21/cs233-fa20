@@ -6,5 +6,11 @@ CacheConfig::CacheConfig(uint32_t size, uint32_t block_size, uint32_t associativ
   /**
    * TODO
    * Compute and set `_num_block_offset_bits`, `_num_index_bits`, `_num_tag_bits`.
-  */ 
+  */
+
+  auto _num_block = (size / block_size) / associativity;
+  _num_block_offset_bits = log_2(block_size);
+  _num_index_bits = log_2(_num_block);
+  _num_tag_bits = 32 - _num_block_offset_bits - _num_index_bits;
+
 }
