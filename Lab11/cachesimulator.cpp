@@ -46,7 +46,7 @@ Cache::Block* CacheSimulator::bring_block_into_cache(uint32_t address) const {
   auto cache_config = _cache->get_config();
   auto index = extract_index(address, cache_config);
   auto blocks = _cache->get_blocks_in_set(index);
-  int least = 0;
+  auto least = 0;
   auto tag = extract_tag(address, cache_config);
   
   for (int i = 0; i < blocks.size(); i++) {
